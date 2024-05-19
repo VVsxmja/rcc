@@ -11,103 +11,85 @@ pub(crate) enum Statement {
     While(Expression, Box<Statement>),
     Block(Block),
     Expression(Expression),
+    Jump(JumpStatement),
     Empty,
 }
 
+#[derive(Debug)]
+pub(crate) enum JumpStatement {
+    Return(Option<Expression>),
+}
+
 impl Statement {
-    #[allow(unused_variables)]
-    pub(crate) fn parse<'a>(
-        tokens: &'a [Token],
-        target: &mut Option<Statement>,
-    ) -> anyhow::Result<&'a [Token]> {
+    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         match tokens {
             [] => unreachable!(),
             [Token::Symbol(Symbol::Semicolon), remain_tokens @ ..] => {
-                *target = Some(Statement::Empty);
-                Ok(remain_tokens)
+                Ok((remain_tokens, Statement::Empty))
             }
             [Token::Keyword(Keyword::If), tokens @ ..] => {
-                let (Token::Symbol(Symbol::LeftParen), tokens) = next(tokens)? else {
-                    anyhow::bail!("Expected left parameter (\"(\")");
+                let (tokens, Token::Symbol(Symbol::LeftParen)) = next(tokens)? else {
+                    anyhow::bail!("Expected \"(\"");
                 };
-                let mut expr = None;
-                let tokens = Expression::parse(tokens, &mut expr)?;
-                let Some(condition) = expr else {
-                    unreachable!();
+                let (tokens, condition) = Expression::parse(tokens)?;
+                let (tokens, Token::Symbol(Symbol::RightParen)) = next(tokens)? else {
+                    anyhow::bail!("Expected \")\"");
                 };
-                let (Token::Symbol(Symbol::RightParen), tokens) = next(tokens)? else {
-                    anyhow::bail!("Expected right parameter (\")\")");
-                };
-                let mut true_branch = None;
-                let tokens = Statement::parse(tokens, &mut true_branch)?;
-                let Some(true_branch) = true_branch else {
-                    unreachable!();
-                };
+                let (tokens, true_branch) = Statement::parse(tokens)?;
                 match tokens {
                     [Token::Keyword(Keyword::Else), tokens @ ..] => {
-                        let mut false_branch = None;
-                        let tokens = Statement::parse(tokens, &mut false_branch)?;
-                        let Some(false_branch) = false_branch else {
-                            unreachable!();
-                        };
-                        *target = Some(Statement::If(
-                            condition,
-                            Box::new(true_branch),
-                            Some(Box::new(false_branch)),
-                        ));
-                        Ok(tokens)
+                        let (tokens, false_branch) = Statement::parse(tokens)?;
+                        Ok((
+                            tokens,
+                            Statement::If(
+                                condition,
+                                Box::new(true_branch),
+                                Some(Box::new(false_branch)),
+                            ),
+                        ))
                     }
-                    _ => {
-                        *target = Some(Statement::If(condition, Box::new(true_branch), None));
-                        Ok(tokens)
-                    }
+                    _ => Ok((
+                        tokens,
+                        Statement::If(condition, Box::new(true_branch), None),
+                    )),
                 }
             }
             [Token::Keyword(Keyword::While), tokens @ ..] => {
-                let (Token::Symbol(Symbol::LeftParen), tokens) = next(tokens)? else {
-                    anyhow::bail!("Expected left parameter (\"(\")");
+                let (tokens, Token::Symbol(Symbol::LeftParen)) = next(tokens)? else {
+                    anyhow::bail!("Expected \"(\"");
                 };
-                let mut expr = None;
-                let tokens = Expression::parse(tokens, &mut expr)?;
-                let Some(condition) = expr else {
-                    unreachable!();
+                let (tokens, condition) = Expression::parse(tokens)?;
+                let (tokens, Token::Symbol(Symbol::RightParen)) = next(tokens)? else {
+                    anyhow::bail!("Expected \")\"");
                 };
-                let (Token::Symbol(Symbol::RightParen), tokens) = next(tokens)? else {
-                    anyhow::bail!("Expected right parameter (\")\")");
-                };
-                let mut body = None;
-                let tokens = Statement::parse(tokens, &mut body)?;
-                let Some(body) = body else {
-                    unreachable!();
-                };
-                match tokens {
-                    [Token::Keyword(Keyword::Else), tokens @ ..] => {
-                        let mut false_branch = None;
-                        let tokens = Statement::parse(tokens, &mut false_branch)?;
-                        let Some(false_branch) = false_branch else {
-                            unreachable!();
-                        };
-                        *target = Some(Statement::If(
-                            condition,
-                            Box::new(body),
-                            Some(Box::new(false_branch)),
-                        ));
-                        Ok(tokens)
-                    }
-                    _ => {
-                        *target = Some(Statement::If(condition, Box::new(body), None));
-                        Ok(tokens)
-                    }
-                }
+                let (tokens, body) = Statement::parse(tokens)?;
+                Ok((tokens, Statement::While(condition, Box::new(body))))
             }
+            [Token::Symbol(Symbol::LeftBrace), ..] => {
+                let (tokens, block) = Block::parse(tokens)?;
+                Ok((tokens, Statement::Block(block)))
+            }
+            [Token::Keyword(Keyword::Return), tokens @ ..] => match tokens {
+                [Token::Symbol(Symbol::Semicolon), tokens @ ..] => {
+                    Ok((tokens, Statement::Jump(JumpStatement::Return(None))))
+                }
+                _ => {
+                    let (tokens, return_value) = Expression::parse(tokens)?;
+                    let (tokens, Token::Symbol(Symbol::Semicolon)) = next(tokens)? else {
+                        anyhow::bail!("Expected \";\"");
+                    };
+                    Ok((
+                        tokens,
+                        Statement::Jump(JumpStatement::Return(Some(return_value))),
+                    ))
+                }
+            },
             _ => {
-                let mut expr = None;
-                let tokens = Expression::parse(tokens, &mut expr)?;
-                let Some(expr) = expr else {
-                    unreachable!();
+                let (tokens, expr) = Expression::parse(tokens)?;
+                let (tokens, Token::Symbol(Symbol::Semicolon)) = next(tokens)? else {
+                    anyhow::bail!("Expected \";\"");
                 };
-                *target = Some(Statement::Expression(expr));
-                Ok(tokens)
+                Ok((tokens, Statement::Expression(expr)))
             }
         }
     }

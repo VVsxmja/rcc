@@ -12,30 +12,24 @@ pub(crate) enum BlockInner {
 }
 
 impl Block {
-    pub(crate) fn parse<'a>(
-        tokens: &'a [Token],
-        target: &mut Option<Self>,
-    ) -> anyhow::Result<&'a [Token]> {
-        let (Token::Symbol(Symbol::LeftBrace), mut tokens) = next(tokens)? else {
-            anyhow::bail!("Expected block statement. Block statement should start with '{{'");
+    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+        let (mut tokens, Token::Symbol(Symbol::LeftBrace)) = next(tokens)? else {
+            anyhow::bail!("Expected block statement. Block statement should start with \"{{\"");
         };
         let mut body = Vec::new();
         loop {
             match tokens {
-                [Token::Symbol(Symbol::RightBrace), ..] => {
-                    *target = Some(Block(body));
-                    break Ok(tokens);
+                [Token::Symbol(Symbol::RightBrace), tokens @ ..] => {
+                    break Ok((tokens, Block(body)));
                 }
                 [Token::Keyword(Keyword::Int | Keyword::Void), ..] => {
-                    let mut decl = None;
-                    tokens = Declaration::parse(tokens, &mut decl)?;
-                    let Some(decl) = decl else { unreachable!() };
+                    let (remain, decl) = Declaration::parse(tokens)?;
+                    tokens = remain;
                     body.push(BlockInner::Declaration(decl));
                 }
                 _ => {
-                    let mut stmts = None;
-                    tokens = Statement::parse(tokens, &mut stmts)?;
-                    let Some(stmts) = stmts else { unreachable!() };
+                    let (remain, stmts) = Statement::parse(tokens)?;
+                    tokens = remain;
                     body.push(BlockInner::Statement(stmts));
                 }
             }

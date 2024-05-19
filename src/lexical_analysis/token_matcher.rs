@@ -91,16 +91,16 @@ lazy_static! {
             .with("*", Token::Symbol(Symbol::Star))
             .with("/", Token::Symbol(Symbol::Slash))
             .with("%", Token::Symbol(Symbol::Modulo))
-            .with("==", Token::Symbol(Symbol::Equal))
-            .with("!=", Token::Symbol(Symbol::NotEqual))
+            .with("==", Token::Symbol(Symbol::EqualEqual))
+            .with("!=", Token::Symbol(Symbol::ExclaimEqual))
             .with("<", Token::Symbol(Symbol::Less))
             .with("<=", Token::Symbol(Symbol::LessEqual))
-            .with(">", Token::Symbol(Symbol::More))
-            .with(">=", Token::Symbol(Symbol::MoreEqual))
+            .with(">", Token::Symbol(Symbol::Greater))
+            .with(">=", Token::Symbol(Symbol::GreaterEqual))
             .with("||", Token::Symbol(Symbol::Or))
             .with("&&", Token::Symbol(Symbol::And))
-            .with("!", Token::Symbol(Symbol::Not))
-            .with("=", Token::Symbol(Symbol::Assign))
+            .with("!", Token::Symbol(Symbol::Exclaim))
+            .with("=", Token::Symbol(Symbol::Equal))
             .with(",", Token::Symbol(Symbol::Comma))
             .with(";", Token::Symbol(Symbol::Semicolon))
             .with("int", Token::Keyword(Keyword::Int))
@@ -189,16 +189,16 @@ mod tests {
         test_token("*", Token::Symbol(Symbol::Star));
         test_token("/", Token::Symbol(Symbol::Slash));
         test_token("%", Token::Symbol(Symbol::Modulo));
-        test_token("==", Token::Symbol(Symbol::Equal));
-        test_token("!=", Token::Symbol(Symbol::NotEqual));
+        test_token("==", Token::Symbol(Symbol::EqualEqual));
+        test_token("!=", Token::Symbol(Symbol::ExclaimEqual));
         test_token("<", Token::Symbol(Symbol::Less));
         test_token("<=", Token::Symbol(Symbol::LessEqual));
-        test_token(">", Token::Symbol(Symbol::More));
-        test_token(">=", Token::Symbol(Symbol::MoreEqual));
+        test_token(">", Token::Symbol(Symbol::Greater));
+        test_token(">=", Token::Symbol(Symbol::GreaterEqual));
         test_token("||", Token::Symbol(Symbol::Or));
         test_token("&&", Token::Symbol(Symbol::And));
-        test_token("!", Token::Symbol(Symbol::Not));
-        test_token("=", Token::Symbol(Symbol::Assign));
+        test_token("!", Token::Symbol(Symbol::Exclaim));
+        test_token("=", Token::Symbol(Symbol::Equal));
         test_token(",", Token::Symbol(Symbol::Comma));
         test_token(";", Token::Symbol(Symbol::Semicolon));
         test_token("int", Token::Keyword(Keyword::Int));

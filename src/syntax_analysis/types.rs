@@ -7,25 +7,20 @@ pub(crate) enum Type {
 }
 
 impl Type {
-    pub(crate) fn parse<'a>(
-        tokens: &'a [Token],
-        target: &mut Option<Self>,
-    ) -> anyhow::Result<&'a [Token]> {
-        fn keyword_to_type(keyword: Keyword) -> Type {
+    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+        fn keyword_to_type(keyword: Keyword) -> anyhow::Result<Type> {
             match keyword {
-                Keyword::Int => Type::Int,
-                Keyword::Void => Type::Void,
-                _ => unreachable!(),
+                Keyword::Int => Ok(Type::Int),
+                Keyword::Void => Ok(Type::Void),
+                _ => anyhow::bail!("Expected type"),
             }
         }
         match tokens {
-            [Token::Keyword(kwtype @ (Keyword::Int | Keyword::Void)), ..] => {
-                *target = Some(keyword_to_type(kwtype.to_owned()));
-                Ok(&tokens[1..])
+            [Token::Keyword(keyword), ..] => {
+                Ok((&tokens[1..], keyword_to_type(keyword.to_owned())?))
             }
-            _ => {
-                anyhow::bail!("Expected type");
-            }
+            [_, ..] => anyhow::bail!("Expected type"),
+            [] => unreachable!(),
         }
     }
 }

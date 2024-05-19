@@ -39,8 +39,8 @@ impl Cli {
                 let code = tokio::fs::read_to_string(file).await?;
                 let code = preprocessing::remove_comment(&code)?;
                 let tokens = lexical_analysis::extract_tokens(&code)?;
-                syntax_analysis::parse(&tokens)?;
-                println!("{tokens:?}");
+                let unit = syntax_analysis::parse(&tokens)?;
+                println!("Parse result {unit:?}");
             }
         }
         Ok(())

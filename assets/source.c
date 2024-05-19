@@ -36,7 +36,7 @@ int demo(int a) {
 
 void main(void) {
     int a;
-    float b;
+    int b;
     int c;
     a = 3;
     b = 4;

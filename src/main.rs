@@ -3,15 +3,14 @@ mod lexical_analysis;
 mod preprocessing;
 mod syntax_analysis;
 
-async fn rcc_main() {
+async fn rcc_main() -> anyhow::Result<()> {
     use clap::Parser;
     let cli = cli::Cli::parse();
-    if let Err(e) = cli.execute().await {
-        tracing::error!("Compiler error: {e}");
-    }
+    cli.execute().await
 }
 
 fn main() -> anyhow::Result<()> {
+    use tracing_subscriber::{filter::LevelFilter, EnvFilter};
     let subscriber = tracing_subscriber::fmt()
         .compact()
         .with_file(true)
@@ -19,11 +18,15 @@ fn main() -> anyhow::Result<()> {
         .with_level(true)
         .with_ansi(true)
         .with_target(false)
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::OFF.into())
+                .from_env_lossy(),
+        )
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?;
-    Ok(runtime.block_on(rcc_main()))
+    runtime.block_on(rcc_main())
 }
