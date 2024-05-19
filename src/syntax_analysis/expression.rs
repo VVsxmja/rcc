@@ -75,10 +75,9 @@ impl PrefixUnaryOperator {
     }
 }
 
+/// https://en.cppreference.com/w/c/language/operator_precedence
 trait Operator {
-    /// https://en.cppreference.com/w/c/language/operator_precedence
     fn precedence(&self) -> usize;
-
     fn right_associative(&self) -> bool;
 }
 
@@ -216,7 +215,7 @@ impl Expression {
     ) -> anyhow::Result<(&[Token], Self)> {
         loop {
             let Ok((remain, bin_op)) = BinaryOperator::parse(tokens) else {
-                break Ok((tokens, lhs))
+                break Ok((tokens, lhs));
             };
             let right_assiciative = bin_op.right_associative();
             let precedence = bin_op.precedence();
