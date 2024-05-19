@@ -1,25 +1,20 @@
 use crate::lexical_analysis::{Keyword, Symbol, Token};
 
 use super::{
-    block_statement::BlockStatement, expression::Expression, next,
-    parameter_definition::ParameterDefinition, types::Type, VariableDefinition,
+    block_statement::Block, expression::Expression, next,
+    parameter_definition::ParameterDefinition, types::Type,
 };
 
 #[derive(Debug)]
-pub(crate) enum TopLevel {
-    Variable(VariableDefinition),
-    Function(
-        Type,
-        String,
-        Vec<ParameterDefinition>,
-        Option<BlockStatement>,
-    ),
+pub(crate) enum Declaration {
+    Variable(Type, String, Option<Expression>),
+    Function(Type, String, Vec<ParameterDefinition>, Option<Block>),
 }
 
-impl TopLevel {
+impl Declaration {
     pub(crate) fn parse<'a>(
         tokens: &'a [Token],
-        target: &mut Vec<Self>,
+        target: &mut Option<Self>,
     ) -> anyhow::Result<&'a [Token]> {
         let mut decl_type = None;
         let tokens = Type::parse(tokens, &mut decl_type)?;
@@ -51,41 +46,46 @@ impl TopLevel {
                 }
                 match tokens {
                     [Token::Symbol(Symbol::Semicolon), remain_tokens @ ..] => {
-                        target.push(TopLevel::Function(decl_type, id, params, None));
+                        let func_decl = Declaration::Function(decl_type, id, params, None);
+                        tracing::trace!("Function definition: {func_decl:?}");
+                        *target = Some(func_decl);
                         remain_tokens
                     }
                     _ => {
                         let mut block_stmt = None;
-                        tokens = BlockStatement::parse(tokens, &mut block_stmt)?;
+                        tokens = Block::parse(tokens, &mut block_stmt)?;
                         let Some(block_stmt) = block_stmt else {
-                            unreachable!("parse_block_statement exit without error nor result");
+                            unreachable!();
                         };
-                        target.push(TopLevel::Function(decl_type, id, params, Some(block_stmt)));
+                        let func_decl =
+                            Declaration::Function(decl_type, id, params, Some(block_stmt));
+                        tracing::trace!("Function definition: {func_decl:?}");
+                        *target = Some(func_decl);
                         tokens
                     }
                 }
             }
             Token::Symbol(Symbol::Semicolon) => {
-                let variable_definition = VariableDefinition(decl_type, id, None);
-                tracing::trace!("Global Variable definition: {variable_definition:?}");
-                target.push(TopLevel::Variable(variable_definition));
+                let var_decl = Declaration::Variable(decl_type, id, None);
+                tracing::trace!("Variable declaration: {var_decl:?}");
+                *target = Some(var_decl);
                 tokens
             }
             Token::Symbol(Symbol::Assign) => {
                 let mut expr = None;
                 let tokens = Expression::parse(tokens, &mut expr)?;
                 let Some(expr) = expr else {
-                    unreachable!("parse_expression exit without error nor result");
+                    unreachable!();
                 };
-                let variable_declaration = VariableDefinition(decl_type, id, Some(expr));
-                tracing::trace!("Global Variable Declaration: {variable_declaration:?}");
-                target.push(TopLevel::Variable(variable_declaration));
+                let variable_declaration = Declaration::Variable(decl_type, id, Some(expr));
+                tracing::trace!("Variable declaration: {variable_declaration:?}");
+                *target = Some(variable_declaration);
                 let (Token::Symbol(Symbol::Semicolon), tokens) = next(tokens)? else {
                     anyhow::bail!("Expected semicolon");
                 };
                 tokens
             }
-            _ => anyhow::bail!("Expected function or global variable, found {token_after_id:?}"),
+            _ => anyhow::bail!("Expected function or variable"),
         };
         return Ok(tokens);
     }

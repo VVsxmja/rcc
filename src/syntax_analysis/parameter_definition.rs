@@ -6,7 +6,10 @@ use super::types::Type;
 pub(crate) struct ParameterDefinition(Type, String);
 
 impl ParameterDefinition {
-    pub(crate) fn parse<'a>(tokens: &'a [Token], target: &mut Vec<Self>) -> anyhow::Result<&'a [Token]> {
+    pub(crate) fn parse<'a>(
+        tokens: &'a [Token],
+        target: &mut Vec<Self>,
+    ) -> anyhow::Result<&'a [Token]> {
         let mut decl_type = None;
         let tokens = Type::parse(tokens, &mut decl_type)?;
         let Some(decl_type) = decl_type else {

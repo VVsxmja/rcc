@@ -40,7 +40,7 @@ enum PositionOperation {
 fn checked_identifier(identifier: &str) -> anyhow::Result<String> {
     let identifier: Vec<_> = identifier.chars().collect();
     match &identifier[..] {
-        [] => unreachable!("Zero-length identifier"),
+        [] => unreachable!(),
         [ch, ..] if ch.is_numeric() => {
             anyhow::bail!("Identifier cannot start with numeric characters")
         }

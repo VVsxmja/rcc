@@ -7,7 +7,10 @@ pub(crate) enum Type {
 }
 
 impl Type {
-    pub(crate) fn parse<'a>(tokens: &'a [Token], target: &mut Option<Self>) -> anyhow::Result<&'a [Token]> {
+    pub(crate) fn parse<'a>(
+        tokens: &'a [Token],
+        target: &mut Option<Self>,
+    ) -> anyhow::Result<&'a [Token]> {
         fn keyword_to_type(keyword: Keyword) -> Type {
             match keyword {
                 Keyword::Int => Type::Int,

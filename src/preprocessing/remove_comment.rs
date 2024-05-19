@@ -59,7 +59,9 @@ mod tests {
 
     #[test]
     fn preserve_normal() {
-        let test_codes = vec!["\n\n\n", "int a;", "a * b", "a / b", "/ *", "/ *", "/ /", "*/", "**"];
+        let test_codes = vec![
+            "\n\n\n", "int a;", "a * b", "a / b", "/ *", "/ *", "/ /", "*/", "**",
+        ];
         for code in test_codes {
             assert_eq!(code, remove_comment(code).unwrap())
         }
