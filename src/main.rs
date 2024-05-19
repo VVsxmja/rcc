@@ -18,6 +18,7 @@ fn main() -> anyhow::Result<()> {
         .with_line_number(true)
         .with_level(true)
         .with_ansi(true)
+        .with_target(false)
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;

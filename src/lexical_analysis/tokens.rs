@@ -4,6 +4,7 @@ pub(crate) enum Token {
     Constant(Constant),
     Symbol(Symbol),
     Keyword(Keyword),
+    End,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

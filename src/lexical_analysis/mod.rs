@@ -55,7 +55,6 @@ pub(crate) fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
 
     while let Some((cursor, ch)) = it.next() {
         use PositionOperation::*;
-        tracing::trace!("Char '{}' ({})", ch.escape_debug(), ch.escape_unicode());
         debug_assert_eq!(position, Position::from_cursor(&input, cursor));
         let position_operation = match ch {
             '\n' => NewLine,
@@ -110,6 +109,7 @@ pub(crate) fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
             }
         }
     }
+    tokens.push(Token::End);
     Ok(tokens)
 }
 
