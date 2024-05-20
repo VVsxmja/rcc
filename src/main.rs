@@ -5,7 +5,7 @@ mod lexical_analysis;
 mod preprocessing;
 mod semantic_analysis;
 mod syntax_analysis;
-mod code_generation;
+mod object_file_generator;
 
 async fn rcc_main() -> anyhow::Result<()> {
     use clap::Parser;

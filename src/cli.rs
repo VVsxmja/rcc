@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use inkwell::targets::FileType;
 
 use crate::{
-    code_generation::generate_object_file,
+    object_file_generator::generate_object_file,
     lexical_analysis, preprocessing,
     semantic_analysis::{self, bitcode_to_string},
     syntax_analysis,
@@ -73,9 +73,6 @@ impl Cli {
                 let unit = syntax_analysis::parse(&tokens)?;
                 let bitcode = semantic_analysis::analysis(unit)?;
                 generate_object_file(bitcode, output.to_owned(), FileType::Object)?;
-                #[cfg(unix)]
-                let output_file = std::fs::File::open(output)?;
-                output_file.metadata()?.permissions().set_mode(777);
             }
             Commands::CompileAssembly { file, output } => {
                 let code = tokio::fs::read_to_string(file).await?;
