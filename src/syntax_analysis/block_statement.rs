@@ -3,7 +3,7 @@ use crate::lexical_analysis::{Keyword, Symbol, Token};
 use super::{declaration::Declaration, next, statement::Statement};
 
 #[derive(Debug)]
-pub(crate) struct Block(Vec<BlockInner>);
+pub(crate) struct Block(pub(crate) Vec<BlockInner>);
 
 #[derive(Debug)]
 pub(crate) enum BlockInner {

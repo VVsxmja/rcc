@@ -9,7 +9,13 @@ pub(crate) enum Expression {
     PrefixUnary(PrefixUnaryOperator, Box<Expression>),
     RefOrCall(RefOrCall),
     Constant(Constant),
+    Evaluate(Box<Expression>),
 }
+
+pub(crate) fn eval(expr: Expression) -> Expression {
+    Expression::Evaluate(Box::new(expr))
+}
+
 #[derive(Debug)]
 pub(crate) enum RefOrCall {
     FunctionCall(String, Vec<Expression>),
@@ -153,7 +159,7 @@ impl Expression {
                 )),
                 _ => loop {
                     let (remain, param) = Expression::parse(tokens)?;
-                    params.push(param);
+                    params.push(eval(param));
                     tokens = match remain {
                         [Token::Symbol(Symbol::RightParen), remain @ ..] => {
                             break Ok((
@@ -193,7 +199,10 @@ impl Expression {
     fn parse_unary_operator(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         if let Ok((tokens, unary_op)) = PrefixUnaryOperator::parse(tokens) {
             let (tokens, operand) = Expression::parse_unary_operator(tokens)?;
-            Ok((tokens, Expression::PrefixUnary(unary_op, Box::new(operand))))
+            Ok((
+                tokens,
+                Expression::PrefixUnary(unary_op, Box::new(eval(operand))),
+            ))
         } else {
             Expression::parse_primary(tokens)
         }
@@ -222,7 +231,12 @@ impl Expression {
             if precedence > max_precedence {
                 break Ok((tokens, lhs));
             }
-            let (remain, mut rhs) = Expression::parse_primary(remain)?;
+            let (remain, rhs) = Expression::parse_primary(remain)?;
+            let mut rhs = eval(rhs);
+            lhs = match bin_op {
+                BinaryOperator::Assign => lhs,
+                _ => eval(lhs),
+            };
             let Ok((_, next_bin_op)) = BinaryOperator::parse(remain) else {
                 let expr = Expression::Binary(Box::new(lhs), bin_op, Box::new(rhs));
                 break Ok((remain, expr));
@@ -237,7 +251,7 @@ impl Expression {
                 };
                 let (remain, new_rhs) =
                     Expression::parse_rhs_of_binary(remain, rhs, next_max_precedence)?;
-                rhs = new_rhs;
+                rhs = eval(new_rhs);
                 tokens = remain;
             } else {
                 tokens = remain;

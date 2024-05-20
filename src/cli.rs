@@ -1,8 +1,17 @@
-use std::path::PathBuf;
+use std::{
+    os::unix::fs::PermissionsExt,
+    path::PathBuf,
+};
 
 use clap::{Parser, Subcommand};
+use inkwell::targets::FileType;
 
-use crate::{lexical_analysis, preprocessing, syntax_analysis};
+use crate::{
+    code_generation::generate_object_file,
+    lexical_analysis, preprocessing,
+    semantic_analysis::{self, bitcode_to_string},
+    syntax_analysis,
+};
 
 #[derive(Parser)]
 #[command(version)]
@@ -19,6 +28,12 @@ enum Commands {
     Lex { file: PathBuf },
     /// View the syntax analysis result of a source file
     Syntax { file: PathBuf },
+    /// View the semantic analysis result of a source file
+    Semantic { file: PathBuf },
+    /// Generate binary a source file
+    CompileBinary { file: PathBuf, output: PathBuf },
+    /// Generate assembly a source file
+    CompileAssembly { file: PathBuf, output: PathBuf },
 }
 
 impl Cli {
@@ -27,20 +42,48 @@ impl Cli {
             Commands::Preprocess { file } => {
                 let code = tokio::fs::read_to_string(file).await?;
                 let code = preprocessing::remove_comment(&code)?;
-                println!("{code}");
+                println!("Preprocess result: {code}");
             }
             Commands::Lex { file } => {
                 let code = tokio::fs::read_to_string(file).await?;
                 let code = preprocessing::remove_comment(&code)?;
                 let tokens = lexical_analysis::extract_tokens(&code)?;
-                println!("{tokens:?}");
+                println!("Lexical analysis result: {tokens:?}");
             }
             Commands::Syntax { file } => {
                 let code = tokio::fs::read_to_string(file).await?;
                 let code = preprocessing::remove_comment(&code)?;
                 let tokens = lexical_analysis::extract_tokens(&code)?;
                 let unit = syntax_analysis::parse(&tokens)?;
-                println!("Parse result {unit:?}");
+                println!("Syntax analysis result: {unit:#?}");
+            }
+            Commands::Semantic { file } => {
+                let code = tokio::fs::read_to_string(file).await?;
+                let code = preprocessing::remove_comment(&code)?;
+                let tokens = lexical_analysis::extract_tokens(&code)?;
+                let unit = syntax_analysis::parse(&tokens)?;
+                let bitcode = semantic_analysis::analysis(unit)?;
+                let ir = bitcode_to_string(bitcode)?;
+                println!("Semantic analysis result: {ir}");
+            }
+            Commands::CompileBinary { file, output } => {
+                let code = tokio::fs::read_to_string(file).await?;
+                let code = preprocessing::remove_comment(&code)?;
+                let tokens = lexical_analysis::extract_tokens(&code)?;
+                let unit = syntax_analysis::parse(&tokens)?;
+                let bitcode = semantic_analysis::analysis(unit)?;
+                generate_object_file(bitcode, output.to_owned(), FileType::Object)?;
+                #[cfg(unix)]
+                let output_file = std::fs::File::open(output)?;
+                output_file.metadata()?.permissions().set_mode(777);
+            }
+            Commands::CompileAssembly { file, output } => {
+                let code = tokio::fs::read_to_string(file).await?;
+                let code = preprocessing::remove_comment(&code)?;
+                let tokens = lexical_analysis::extract_tokens(&code)?;
+                let unit = syntax_analysis::parse(&tokens)?;
+                let bitcode = semantic_analysis::analysis(unit)?;
+                generate_object_file(bitcode, output, FileType::Assembly)?;
             }
         }
         Ok(())

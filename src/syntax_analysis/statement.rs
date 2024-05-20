@@ -3,7 +3,10 @@ use crate::{
     syntax_analysis::next,
 };
 
-use super::{block_statement::Block, expression::Expression};
+use super::{
+    block_statement::Block,
+    expression::{eval, Expression},
+};
 
 #[derive(Debug)]
 pub(crate) enum Statement {
@@ -42,7 +45,7 @@ impl Statement {
                         Ok((
                             tokens,
                             Statement::If(
-                                condition,
+                                eval(condition),
                                 Box::new(true_branch),
                                 Some(Box::new(false_branch)),
                             ),
@@ -50,7 +53,7 @@ impl Statement {
                     }
                     _ => Ok((
                         tokens,
-                        Statement::If(condition, Box::new(true_branch), None),
+                        Statement::If(eval(condition), Box::new(true_branch), None),
                     )),
                 }
             }
@@ -63,7 +66,7 @@ impl Statement {
                     anyhow::bail!("Expected \")\"");
                 };
                 let (tokens, body) = Statement::parse(tokens)?;
-                Ok((tokens, Statement::While(condition, Box::new(body))))
+                Ok((tokens, Statement::While(eval(condition), Box::new(body))))
             }
             [Token::Symbol(Symbol::LeftBrace), ..] => {
                 let (tokens, block) = Block::parse(tokens)?;
@@ -80,7 +83,7 @@ impl Statement {
                     };
                     Ok((
                         tokens,
-                        Statement::Jump(JumpStatement::Return(Some(return_value))),
+                        Statement::Jump(JumpStatement::Return(Some(eval(return_value)))),
                     ))
                 }
             },

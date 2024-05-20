@@ -1,12 +1,12 @@
 use crate::{lexical_analysis::Token, syntax_analysis::translation_unit::TranslationUnit};
 
-mod block_statement;
-mod declaration;
-mod expression;
-mod parameter_definition;
-mod statement;
-mod translation_unit;
-mod types;
+pub(crate) mod block_statement;
+pub(crate) mod declaration;
+pub(crate) mod expression;
+pub(crate) mod parameter_definition;
+pub(crate) mod statement;
+pub(crate) mod translation_unit;
+pub(crate) mod types;
 
 pub(self) fn next(tokens: &[Token]) -> anyhow::Result<(&[Token], Token)> {
     match tokens {

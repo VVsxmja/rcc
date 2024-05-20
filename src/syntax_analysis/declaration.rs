@@ -1,4 +1,7 @@
-use crate::lexical_analysis::{Keyword, Symbol, Token};
+use crate::{
+    lexical_analysis::{Keyword, Symbol, Token},
+    syntax_analysis::expression::eval,
+};
 
 use super::{
     block_statement::Block, expression::Expression, next,
@@ -58,7 +61,7 @@ impl Declaration {
             }
             Token::Symbol(Symbol::Equal) => {
                 let (tokens, expr) = Expression::parse(tokens)?;
-                let var_decl = Declaration::Variable(decl_type, id, Some(expr));
+                let var_decl = Declaration::Variable(decl_type, id, Some(eval(expr)));
                 tracing::trace!("Variable declaration: {var_decl:?}");
                 let (tokens, Token::Symbol(Symbol::Semicolon)) = next(tokens)? else {
                     anyhow::bail!("Expected \";\"");

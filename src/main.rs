@@ -1,7 +1,11 @@
+// #![allow(warnings)]
+
 mod cli;
 mod lexical_analysis;
 mod preprocessing;
+mod semantic_analysis;
 mod syntax_analysis;
+mod code_generation;
 
 async fn rcc_main() -> anyhow::Result<()> {
     use clap::Parser;
