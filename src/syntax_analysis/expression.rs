@@ -3,7 +3,7 @@ use crate::lexical_analysis::{Constant, Symbol, Token};
 use super::next;
 
 #[derive(Debug)]
-pub(crate) enum Expression {
+pub enum Expression {
     Paren(Box<Expression>),
     Binary(Box<Expression>, BinaryOperator, Box<Expression>),
     PrefixUnary(PrefixUnaryOperator, Box<Expression>),
@@ -12,18 +12,18 @@ pub(crate) enum Expression {
     Evaluate(Box<Expression>),
 }
 
-pub(crate) fn eval(expr: Expression) -> Expression {
+pub fn eval(expr: Expression) -> Expression {
     Expression::Evaluate(Box::new(expr))
 }
 
 #[derive(Debug)]
-pub(crate) enum RefOrCall {
+pub enum RefOrCall {
     FunctionCall(String, Vec<Expression>),
     Variable(String),
 }
 
 #[derive(Debug)]
-pub(crate) enum BinaryOperator {
+pub enum BinaryOperator {
     Plus,
     Minus,
     Multiply,
@@ -39,7 +39,7 @@ pub(crate) enum BinaryOperator {
 }
 
 impl BinaryOperator {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         use BinaryOperator::*;
         let (tokens, token) = next(tokens)?;
         let op = match token {
@@ -61,14 +61,14 @@ impl BinaryOperator {
 }
 
 #[derive(Debug)]
-pub(crate) enum PrefixUnaryOperator {
+pub enum PrefixUnaryOperator {
     Plus,
     Minus,
     Not,
 }
 
 impl PrefixUnaryOperator {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         use PrefixUnaryOperator::*;
         let (tokens, token) = next(tokens)?;
         let op = match token {
@@ -81,7 +81,7 @@ impl PrefixUnaryOperator {
     }
 }
 
-/// https://en.cppreference.com/w/c/language/operator_precedence
+/// [C Operator Precedence](https://en.cppreference.com/w/c/language/operator_precedence)
 trait Operator {
     fn precedence(&self) -> usize;
     fn right_associative(&self) -> bool;
@@ -91,16 +91,10 @@ impl Operator for BinaryOperator {
     fn precedence(&self) -> usize {
         use BinaryOperator::*;
         match self {
-            Plus => 4,
-            Minus => 4,
-            Multiply => 3,
-            Divide => 3,
-            Less => 6,
-            LessEqual => 6,
-            Greater => 6,
-            GreaterEqual => 6,
-            Equal => 7,
-            NotEqual => 7,
+            Multiply | Divide => 3,
+            Plus | Minus => 4,
+            Less | LessEqual | Greater | GreaterEqual => 6,
+            Equal | NotEqual => 7,
             Assign => 14,
             Comma => 15,
         }
@@ -109,18 +103,9 @@ impl Operator for BinaryOperator {
     fn right_associative(&self) -> bool {
         use BinaryOperator::*;
         match self {
-            Plus => false,
-            Minus => false,
-            Multiply => false,
-            Divide => false,
-            Less => false,
-            LessEqual => false,
-            Greater => false,
-            GreaterEqual => false,
-            Equal => false,
-            NotEqual => false,
+            Plus | Minus | Multiply | Divide | Less | LessEqual | Greater | GreaterEqual
+            | Equal | NotEqual | Comma => false,
             Assign => true,
-            Comma => false,
         }
     }
 }
@@ -129,18 +114,14 @@ impl Operator for PrefixUnaryOperator {
     fn precedence(&self) -> usize {
         use PrefixUnaryOperator::*;
         match self {
-            Plus => 2,
-            Minus => 2,
-            Not => 2,
+            Plus | Minus | Not => 2,
         }
     }
 
     fn right_associative(&self) -> bool {
         use PrefixUnaryOperator::*;
         match self {
-            Plus => true,
-            Minus => true,
-            Not => true,
+            Plus | Minus | Not => true,
         }
     }
 }
@@ -265,7 +246,7 @@ impl Expression {
         Expression::parse_rhs_of_binary(tokens, lhs, BinaryOperator::Comma.precedence())
     }
 
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         Expression::parse_binary_operator(tokens)
     }
 }

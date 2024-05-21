@@ -3,16 +3,16 @@ use crate::lexical_analysis::{Keyword, Symbol, Token};
 use super::{declaration::Declaration, next, statement::Statement};
 
 #[derive(Debug)]
-pub(crate) struct Block(pub(crate) Vec<BlockInner>);
+pub struct Block(pub Vec<BlockInner>);
 
 #[derive(Debug)]
-pub(crate) enum BlockInner {
+pub enum BlockInner {
     Declaration(Declaration),
     Statement(Statement),
 }
 
 impl Block {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         let (mut tokens, Token::Symbol(Symbol::LeftBrace)) = next(tokens)? else {
             anyhow::bail!("Expected block statement. Block statement should start with \"{{\"");
         };

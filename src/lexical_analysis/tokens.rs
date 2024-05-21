@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Token {
+pub enum Token {
     Identifier(String),
     Constant(Constant),
     Symbol(Symbol),
@@ -8,7 +8,7 @@ pub(crate) enum Token {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Symbol {
+pub enum Symbol {
     LeftBrace,
     RightBrace,
     LeftParen,
@@ -33,7 +33,7 @@ pub(crate) enum Symbol {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Keyword {
+pub enum Keyword {
     Int,
     Void,
     If,
@@ -43,14 +43,14 @@ pub(crate) enum Keyword {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Constant {
+pub enum Constant {
     Int(i32),
 }
 
 impl Constant {
-    pub(crate) fn new(input: &str) -> Result<Self, ()> {
+    pub fn new(input: &str) -> Result<Self, ()> {
         if let Ok(value) = input.parse::<i32>() {
-            return Ok(Self::Int(value));
+            return Ok(Constant::Int(value));
         }
         Err(())
     }

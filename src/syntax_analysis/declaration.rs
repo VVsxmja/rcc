@@ -9,13 +9,13 @@ use super::{
 };
 
 #[derive(Debug)]
-pub(crate) enum Declaration {
+pub enum Declaration {
     Variable(Type, String, Option<Expression>),
     Function(Type, String, Vec<ParameterDefinition>, Option<Block>),
 }
 
 impl Declaration {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         let (tokens, decl_type) = Type::parse(tokens)?;
         let (tokens, Token::Identifier(id)) = next(tokens)? else {
             anyhow::bail!("Expected identifier");
@@ -39,19 +39,15 @@ impl Declaration {
                         }
                     },
                 }
-                match tokens {
-                    [Token::Symbol(Symbol::Semicolon), tokens @ ..] => {
-                        let func_decl = Declaration::Function(decl_type, id, params, None);
-                        tracing::trace!("Function definition: {func_decl:?}");
-                        Ok((tokens, func_decl))
-                    }
-                    _ => {
-                        let (tokens, block_stmt) = Block::parse(tokens)?;
-                        let func_decl =
-                            Declaration::Function(decl_type, id, params, Some(block_stmt));
-                        tracing::trace!("Function definition: {func_decl:?}");
-                        Ok((tokens, func_decl))
-                    }
+                if let [Token::Symbol(Symbol::Semicolon), tokens @ ..] = tokens {
+                    let func_decl = Declaration::Function(decl_type, id, params, None);
+                    tracing::trace!("Function definition: {func_decl:?}");
+                    Ok((tokens, func_decl))
+                } else {
+                    let (tokens, block_stmt) = Block::parse(tokens)?;
+                    let func_decl = Declaration::Function(decl_type, id, params, Some(block_stmt));
+                    tracing::trace!("Function definition: {func_decl:?}");
+                    Ok((tokens, func_decl))
                 }
             }
             Token::Symbol(Symbol::Semicolon) => {

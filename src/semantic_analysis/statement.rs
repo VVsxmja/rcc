@@ -120,7 +120,7 @@ impl<'ctx> IR<'ctx> {
                                 "Unexpected return type"
                             );
                             self.builder
-                                .build_store(self.return_value.to_owned().unwrap(), ret_value)?;
+                                .build_store(self.return_value.clone().unwrap(), ret_value)?;
                         }
                         (None, None) => {}
                         (None, Some(_)) => {

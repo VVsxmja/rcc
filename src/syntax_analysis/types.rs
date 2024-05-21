@@ -1,23 +1,21 @@
 use crate::lexical_analysis::{Keyword, Token};
 
 #[derive(Debug)]
-pub(crate) enum Type {
+pub enum Type {
     Void,
     Int,
 }
 
 impl Type {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
-        fn keyword_to_type(keyword: Keyword) -> anyhow::Result<Type> {
-            match keyword {
-                Keyword::Int => Ok(Type::Int),
-                Keyword::Void => Ok(Type::Void),
-                _ => anyhow::bail!("Expected type"),
-            }
-        }
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         match tokens {
             [Token::Keyword(keyword), ..] => {
-                Ok((&tokens[1..], keyword_to_type(keyword.to_owned())?))
+                let kwtype = match keyword {
+                    Keyword::Int => Type::Int,
+                    Keyword::Void => Type::Void,
+                    _ => anyhow::bail!("Expected type"),
+                };
+                Ok((&tokens[1..], kwtype))
             }
             [_, ..] => anyhow::bail!("Expected type"),
             [] => unreachable!(),

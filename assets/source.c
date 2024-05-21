@@ -31,7 +31,7 @@ int program(int a, int b, int c) {
 
 int demo(int a) {
     a = a + 2;
-    return a * 2;
+    return demo(a * 2);
 }
 
 void main(void) {

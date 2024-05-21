@@ -9,7 +9,7 @@ use super::{
 };
 
 #[derive(Debug)]
-pub(crate) enum Statement {
+pub enum Statement {
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     While(Expression, Box<Statement>),
     Block(Block),
@@ -19,12 +19,12 @@ pub(crate) enum Statement {
 }
 
 #[derive(Debug)]
-pub(crate) enum JumpStatement {
+pub enum JumpStatement {
     Return(Option<Expression>),
 }
 
 impl Statement {
-    pub(crate) fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
+    pub fn parse(tokens: &[Token]) -> anyhow::Result<(&[Token], Self)> {
         match tokens {
             [] => unreachable!(),
             [Token::Symbol(Symbol::Semicolon), remain_tokens @ ..] => {
@@ -86,7 +86,7 @@ impl Statement {
                         Statement::Jump(JumpStatement::Return(Some(eval(return_value)))),
                     ))
                 }
-            },
+            }
             _ => {
                 let (tokens, expr) = Expression::parse(tokens)?;
                 let (tokens, Token::Symbol(Symbol::Semicolon)) = next(tokens)? else {

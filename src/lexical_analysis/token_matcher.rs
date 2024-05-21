@@ -2,13 +2,13 @@ use super::*;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-pub(super) struct TokenMatcher {
+pub(in super) struct TokenMatcher {
     pub(self) child: HashMap<char, TokenMatcher>,
     pub(self) current_token: Option<Token>,
 }
 
 impl TokenMatcher {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         TokenMatcher {
             child: HashMap::new(),
             current_token: None,
@@ -24,24 +24,25 @@ impl TokenMatcher {
                     Err(())
                 }
             }
-            [ch, ..] => match self.child.get_mut(ch) {
-                Some(child) => child.patch(&pattern[1..], token),
-                None => {
+            [ch, ..] => {
+                if let Some(child) = self.child.get_mut(ch) {
+                    child.patch(&pattern[1..], token)
+                } else {
                     let mut child = TokenMatcher::new();
                     child.patch(&pattern[1..], token)?;
                     self.child.insert(ch.to_owned(), child);
                     Ok(())
                 }
-            },
+            }
         }
     }
-    pub(crate) fn get_token(&self, input: &str) -> Option<(Token, usize)> {
+    pub fn get_token(&self, input: &str) -> Option<(Token, usize)> {
         fn search(matcher: &TokenMatcher, input: &[char], depth: usize) -> Option<(Token, usize)> {
             match input {
-                [] => matcher.current_token.to_owned().map(|token| (token, depth)),
+                [] => matcher.current_token.clone().map(|token| (token, depth)),
                 [ch, ..] => match matcher.child.get(ch) {
                     Some(child) => search(child, &input[1..], depth + 1),
-                    None => matcher.current_token.to_owned().map(|token| (token, depth)),
+                    None => matcher.current_token.clone().map(|token| (token, depth)),
                 },
             }
         }
@@ -56,22 +57,22 @@ enum TokenMatcherBuilder {
 }
 
 impl TokenMatcherBuilder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         TokenMatcherBuilder::Ok(TokenMatcher::new())
     }
-    pub(crate) fn with(self, pattern: &str, token: Token) -> Self {
+    pub fn with(self, pattern: &str, token: Token) -> Self {
         match self {
             TokenMatcherBuilder::Ok(mut matcher) => {
                 let pattern_as_slice: Box<[char]> = pattern.chars().collect();
                 match matcher.patch(&pattern_as_slice, token) {
-                    Err(_) => TokenMatcherBuilder::DuplicatePattern(pattern.to_string()),
-                    Ok(_) => TokenMatcherBuilder::Ok(matcher),
+                    Err(()) => TokenMatcherBuilder::DuplicatePattern(pattern.to_string()),
+                    Ok(()) => TokenMatcherBuilder::Ok(matcher),
                 }
             }
-            err => err,
+            err @ TokenMatcherBuilder::DuplicatePattern(_) => err,
         }
     }
-    pub(crate) fn build(self) -> anyhow::Result<TokenMatcher> {
+    pub fn build(self) -> anyhow::Result<TokenMatcher> {
         match self {
             Self::Ok(matcher) => Ok(matcher),
             Self::DuplicatePattern(pattern) => anyhow::bail!("Duplicate pattern: {pattern}"),

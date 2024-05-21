@@ -1,17 +1,9 @@
-// #![allow(warnings)]
-
 mod cli;
 mod lexical_analysis;
+mod object_file_generator;
 mod preprocessing;
 mod semantic_analysis;
 mod syntax_analysis;
-mod object_file_generator;
-
-async fn rcc_main() -> anyhow::Result<()> {
-    use clap::Parser;
-    let cli = cli::Cli::parse();
-    cli.execute().await
-}
 
 fn main() -> anyhow::Result<()> {
     use tracing_subscriber::{filter::LevelFilter, EnvFilter};
@@ -32,5 +24,9 @@ fn main() -> anyhow::Result<()> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?;
-    runtime.block_on(rcc_main())
+    runtime.block_on(async move {
+        use clap::Parser;
+        let cli = cli::Cli::parse();
+        cli.execute().await
+    })
 }

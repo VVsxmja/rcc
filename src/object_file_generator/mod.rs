@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::anyhow;
 use inkwell::{
@@ -8,7 +8,11 @@ use inkwell::{
     OptimizationLevel,
 };
 
-pub(crate) fn generate_object_file(bitcode: MemoryBuffer, output_path: PathBuf, file_type: FileType) -> anyhow::Result<()> {
+pub fn generate_object_file(
+    bitcode: MemoryBuffer,
+    output_path: &Path,
+    file_type: FileType,
+) -> anyhow::Result<()> {
     let triple = TargetMachine::get_default_triple();
     Target::initialize_all(&InitializationConfig::default());
     let target =
@@ -28,7 +32,7 @@ pub(crate) fn generate_object_file(bitcode: MemoryBuffer, output_path: PathBuf, 
         .create_module_from_ir(bitcode)
         .map_err(|llvm_string| anyhow!(llvm_string.to_string()))?;
     target_machine
-        .write_to_file(&module, file_type, &output_path)
+        .write_to_file(&module, file_type, output_path)
         .map_err(|llvm_string| anyhow!(llvm_string.to_string()))?;
     Ok(())
 }

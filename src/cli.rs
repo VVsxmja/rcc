@@ -13,7 +13,7 @@ use crate::{
 
 #[derive(Parser)]
 #[command(version)]
-pub(crate) struct Cli {
+pub struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
@@ -35,7 +35,7 @@ enum Commands {
 }
 
 impl Cli {
-    pub(crate) async fn execute(self) -> anyhow::Result<()> {
+    pub async fn execute(self) -> anyhow::Result<()> {
         match self.command {
             Commands::Preprocess { file } => {
                 let code = tokio::fs::read_to_string(file).await?;
@@ -70,7 +70,7 @@ impl Cli {
                 let tokens = lexical_analysis::extract_tokens(&code)?;
                 let unit = syntax_analysis::parse(&tokens)?;
                 let bitcode = semantic_analysis::analysis(unit)?;
-                generate_object_file(bitcode, output.to_owned(), FileType::Object)?;
+                generate_object_file(bitcode, &output, FileType::Object)?;
             }
             Commands::CompileAssembly { file, output } => {
                 let code = tokio::fs::read_to_string(file).await?;
@@ -78,7 +78,7 @@ impl Cli {
                 let tokens = lexical_analysis::extract_tokens(&code)?;
                 let unit = syntax_analysis::parse(&tokens)?;
                 let bitcode = semantic_analysis::analysis(unit)?;
-                generate_object_file(bitcode, output, FileType::Assembly)?;
+                generate_object_file(bitcode, &output, FileType::Assembly)?;
             }
         }
         Ok(())

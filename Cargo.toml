@@ -2,6 +2,8 @@
 name = "rcc"
 version = "0.1.0"
 edition = "2021"
+description = "A toy C compiler written in Rust."
+repository = "https://github.com/VVsxmja/rcc"
 
 [dependencies]
 anyhow = { version = "1.0.86", features = ["backtrace"] }

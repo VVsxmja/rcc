@@ -2,7 +2,7 @@ mod token_matcher;
 mod tokens;
 
 use token_matcher::*;
-pub(crate) use tokens::*;
+pub use tokens::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Position {
@@ -48,27 +48,26 @@ fn checked_identifier(identifier: &str) -> anyhow::Result<String> {
     }
 }
 
-pub(crate) fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
+pub fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut position = Position { column: 0, line: 0 };
-    let mut it = input.chars().enumerate().peekable();
+    let mut it = input.chars().enumerate();
 
     while let Some((cursor, ch)) = it.next() {
         use PositionOperation::*;
-        debug_assert_eq!(position, Position::from_cursor(&input, cursor));
+        debug_assert_eq!(position, Position::from_cursor(input, cursor));
         let position_operation = match ch {
             '\n' => NewLine,
             ch if ch.is_ascii_whitespace() => Next(1),
-            _ => match TOKEN_MATCHER.get_token(&input[cursor..]) {
-                Some((token, token_len)) => {
+            _ => {
+                if let Some((token, token_len)) = TOKEN_MATCHER.get_token(&input[cursor..]) {
                     tracing::trace!("Token: {token:?}");
                     tokens.push(token);
                     for _ in 0..(token_len - 1) {
                         let _ = it.next();
                     }
                     Next(token_len)
-                }
-                None => {
+                } else {
                     // identifier or constant
                     let buffer: String = input[cursor..]
                         .chars()
@@ -78,9 +77,8 @@ pub(crate) fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
                     for i in 0..(buffer.len()) {
                         if TOKEN_MATCHER.get_token(&buffer[i..]).is_some() {
                             break;
-                        } else {
-                            end = i + 1;
                         }
+                        end = i + 1;
                     }
                     let buffer = &buffer[..end];
                     if let Ok(constant) = Constant::new(buffer) {
@@ -97,7 +95,7 @@ pub(crate) fn extract_tokens(input: &str) -> anyhow::Result<Vec<Token>> {
                     }
                     Next(buffer.len())
                 }
-            },
+            }
         };
         match position_operation {
             NewLine => {

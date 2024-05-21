@@ -28,7 +28,7 @@ impl<'ctx> IR<'ctx> {
                 },
             },
             Expression::Binary(lhs, bin_op, rhs) => {
-                if let BinaryOperator::Assign = bin_op {
+                if matches!(bin_op, BinaryOperator::Assign) {
                     let Expression::RefOrCall(RefOrCall::Variable(lhs)) = *lhs else {
                         anyhow::bail!("Only variable can be assigned");
                     };
@@ -51,6 +51,7 @@ impl<'ctx> IR<'ctx> {
                         _ => unreachable!(),
                     }
                 } else {
+                    use inkwell::IntPredicate;
                     let Some(lhs) = self.analysis_expression(*lhs)? else {
                         anyhow::bail!("Operand cannot be void");
                     };
@@ -58,7 +59,6 @@ impl<'ctx> IR<'ctx> {
                         anyhow::bail!("Operand cannot be void");
                     };
                     tracing::trace!("doing {} {:?} {}", lhs, bin_op, rhs);
-                    use inkwell::IntPredicate;
                     let result = match bin_op {
                         BinaryOperator::Multiply => match lhs {
                             BasicValueEnum::IntValue(lhs) => match rhs {
@@ -169,10 +169,10 @@ impl<'ctx> IR<'ctx> {
                 }
             }
             Expression::PrefixUnary(op, operand) => {
+                use inkwell::IntPredicate;
                 let Some(operand) = self.analysis_expression(*operand)? else {
                     anyhow::bail!("Operand cannot be void");
                 };
-                use inkwell::IntPredicate;
                 let result = match op {
                     PrefixUnaryOperator::Minus => match operand {
                         BasicValueEnum::IntValue(operand) => Some(
