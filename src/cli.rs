@@ -1,14 +1,12 @@
-use std::{
-    os::unix::fs::PermissionsExt,
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use inkwell::targets::FileType;
 
 use crate::{
+    lexical_analysis,
     object_file_generator::generate_object_file,
-    lexical_analysis, preprocessing,
+    preprocessing,
     semantic_analysis::{self, bitcode_to_string},
     syntax_analysis,
 };
@@ -30,9 +28,9 @@ enum Commands {
     Syntax { file: PathBuf },
     /// View the semantic analysis result of a source file
     Semantic { file: PathBuf },
-    /// Generate binary a source file
+    /// Generate binary from a source file
     CompileBinary { file: PathBuf, output: PathBuf },
-    /// Generate assembly a source file
+    /// Generate assembly from a source file
     CompileAssembly { file: PathBuf, output: PathBuf },
 }
 
