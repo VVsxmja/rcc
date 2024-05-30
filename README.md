@@ -2,6 +2,12 @@
 
 A toy C compiler written in Rust.
 
+## Requirement
+
+LLVM should be installed in your system.
+
+The version of LLVM to be used can be specified by changing `features` of [`inkwell`](https://github.com/TheDan64/inkwell) crate in `Cargo.toml` .
+
 ## Usage
 
 ```
